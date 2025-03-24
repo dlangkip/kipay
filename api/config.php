@@ -16,8 +16,8 @@ $CONFIG = [
     ],
     
     // Pesapal settings
-    'consumer_key' => 'Y3s2XevykfHuVdtUDC4L0/NwPl/7CVyId',
-    'consumer_secret' => 'PwHtwowedNb6Gz458QdfTI93EHg=',
+    'consumer_key' => 'qkio1BGGYAXTu2JOfm7XSXNruoZsrqEW',
+    'consumer_secret' => 'osGQ364R49cXKeOYSpaOnT++rHs=',
     'environment' => 'sandbox', // 'sandbox' or 'production'
     'callback_url' => 'https://kipay.benfex.net/payment/callback',
     
@@ -26,6 +26,13 @@ $CONFIG = [
     'db_name' => 'kipay_gateway',
     'db_user' => 'benfex',
     'db_pass' => 'Benfex@2025',
+
+    // M-Pesa API credentials for STK Push
+    'mpesa_consumer_key' => 'gZeVnipAY96Q5SEbfRs99VHDuZlFHFhLUmpVyVsJ3g5kaGyP',
+    'mpesa_consumer_secret' => 'QoqWwIoBe6c5cSybWl4H6f99BBWzabIqxGvGd14LOXkf3mfdz8DmDeLOGZtuA9mT',
+    'mpesa_shortcode' => '174379', // Business ShortCode (Paybill or Till)
+    'mpesa_passkey' => 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919',
+    'mpesa_environment' => 'sandbox', // 'sandbox' or 'production'
     
     // Logging settings
     'log_path' => __DIR__ . '/../logs',

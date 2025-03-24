@@ -6,7 +6,7 @@ A custom payment gateway built on top of Pesapal's API, designed for integration
 
 - **REST API**: Clean and well-documented API for integrating with any application
 - **Pesapal Integration**: Leverages Pesapal's payment processing capabilities for African markets
-- **phpnuxbill Module**: Seamless integration with phpnuxbill billing system
+- **Benfex Module**: Seamless integration with benfex billing system
 - **Secure**: Implements API key authentication and other security best practices
 - **Customizable**: Easy to brand and modify for your specific needs
 - **Comprehensive Logging**: Detailed logs for debugging and auditing

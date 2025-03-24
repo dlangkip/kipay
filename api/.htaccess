@@ -1,4 +1,30 @@
 <IfModule mod_rewrite.c>
+    # Enable rewrite engine
     RewriteEngine On
-    RewriteRule ^test-htaccess\.php$ redirected.php [L,R=302]
+    
+    # If the file exists, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+    
+    # If the directory exists, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    
+    # Map /payments to payments.php
+    RewriteRule ^payments$ payments.php [L]
+    
+    # Map /payments/methods to payments-methods.php
+    RewriteRule ^payments/methods$ payments-methods.php [L]
+    
+    # Map /payments/status to payments-status.php
+    RewriteRule ^payments/status$ payments-status.php [QSA,L]
+    
+    # Map /webhook/ipn to webhook-ipn.php
+    RewriteRule ^webhook/ipn$ webhook-ipn.php [L]
+    
+    # If none of the above matches, route to index.php
+    RewriteRule ^ index.php [QSA,L]
 </IfModule>
+
+# Set default index files
+DirectoryIndex index.php

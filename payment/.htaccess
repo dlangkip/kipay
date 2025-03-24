@@ -1,0 +1,5 @@
+RewriteEngine On
+RewriteBase /payment/
+
+# Rewrite callback to callback.php
+RewriteRule ^callback$ callback.php [QSA,L]
