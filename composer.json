@@ -1,0 +1,35 @@
+{
+    "name": "benfex/kipay-gateway",
+    "description": "A custom payment gateway built on top of Pesapal's API for African markets",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Amos Kiprotich",
+            "email": "support@benfex.net"
+        }
+    ],
+    "require": {
+        "php": ">=7.2",
+        "ext-pdo": "*",
+        "ext-json": "*",
+        "ext-curl": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "MyPaymentGateway\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "mkdir -p logs",
+            "chmod -R 775 logs"
+        ]
+    }
+}
