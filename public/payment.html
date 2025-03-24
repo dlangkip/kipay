@@ -1,0 +1,396 @@
+<!-- /public/payment.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kipay Payment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 30px;
+        }
+        .payment-card {
+            margin: 0 auto;
+            max-width: 500px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .merchant-logo {
+            max-width: 100px;
+            margin: 0 auto 20px;
+            display: block;
+        }
+        .payment-method-card {
+            cursor: pointer;
+            border: 2px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .payment-method-card.selected {
+            border-color: #0d6efd;
+            background-color: #f0f7ff;
+        }
+        .payment-method-card img {
+            height: 30px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="payment-card bg-white">
+            <div id="step1" class="payment-step">
+                <h2 class="text-center mb-4">Payment Details</h2>
+                
+                <div id="merchantInfo" class="text-center mb-4">
+                    <img id="merchantLogo" src="/placeholder-logo.png" alt="Merchant Logo" class="merchant-logo">
+                    <h4 id="merchantName">Loading merchant...</h4>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Amount:</strong></p>
+                            <h3 id="paymentAmount">KES 0.00</h3>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Reference:</strong></p>
+                            <p id="paymentReference">-</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <h5 class="mb-3">Select Payment Method</h5>
+                
+                <div id="paymentMethods">
+                    <!-- Payment methods will be loaded here -->
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading payment methods...</p>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <button id="proceedBtn" class="btn btn-primary btn-lg" disabled>Proceed to Pay</button>
+                </div>
+            </div>
+            
+            <div id="step2" class="payment-step" style="display: none;">
+                <h2 class="text-center mb-4">Complete Payment</h2>
+                
+                <div id="mpesaForm" class="payment-form">
+                    <div class="alert alert-info mb-4">
+                        <h5>M-Pesa Payment</h5>
+                        <p>Enter your phone number to receive an STK push from M-Pesa</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control form-control-lg" id="phone" placeholder="e.g. 254712345678">
+                        <div class="form-text">Enter your M-Pesa registered phone number</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button id="payBtn" class="btn btn-success btn-lg">Pay Now</button>
+                        <button id="backBtn" class="btn btn-outline-secondary">Back</button>
+                    </div>
+                </div>
+                
+                <div id="otherForms" class="payment-form" style="display: none;">
+                    <div class="alert alert-info mb-4">
+                        <h5>Other Payment Methods</h5>
+                        <p>This is a placeholder for other payment methods</p>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-secondary" id="otherBackBtn">Back</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="step3" class="payment-step" style="display: none;">
+                <div class="text-center py-4">
+                    <div id="loadingPayment">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Processing payment...</span>
+                        </div>
+                        <h4 class="mt-3">Processing Payment</h4>
+                        <p>Please check your phone and enter your M-Pesa PIN</p>
+                    </div>
+                    
+                    <div id="paymentSuccess" style="display: none;">
+                        <div class="mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-check-circle-fill text-success" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-success">Payment Successful!</h3>
+                        <p>Your payment has been processed successfully</p>
+                        <div class="mt-4">
+                            <p><strong>Transaction Reference:</strong> <span id="successReference"></span></p>
+                            <p><strong>Amount:</strong> <span id="successAmount"></span></p>
+                            <p><strong>Date:</strong> <span id="successDate"></span></p>
+                        </div>
+                    </div>
+                    
+                    <div id="paymentFailed" style="display: none;">
+                        <div class="mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-x-circle-fill text-danger" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-danger">Payment Failed</h3>
+                        <p id="failureReason">Your payment could not be processed</p>
+                        <div class="d-grid gap-2 mt-4">
+                            <button id="retryBtn" class="btn btn-primary">Try Again</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const merchantId = urlParams.get('merchant_id');
+            const amount = urlParams.get('amount');
+            const reference = urlParams.get('reference') || generateReference();
+            const description = urlParams.get('description') || 'Payment';
+            
+            if (!merchantId || !amount) {
+                alert('Missing required parameters: merchant_id and amount');
+                return;
+            }
+            
+            // Set payment details
+            document.getElementById('paymentAmount').textContent = `KES ${parseFloat(amount).toFixed(2)}`;
+            document.getElementById('paymentReference').textContent = reference;
+            
+            // API base URL
+            const apiBaseUrl = '/api';
+            
+            // Load merchant details
+            loadMerchantDetails(merchantId);
+            
+            // Load payment methods
+            loadPaymentMethods(merchantId);
+            
+            // Event listeners
+            document.getElementById('proceedBtn').addEventListener('click', goToStep2);
+            document.getElementById('backBtn').addEventListener('click', goToStep1);
+            document.getElementById('otherBackBtn').addEventListener('click', goToStep1);
+            document.getElementById('payBtn').addEventListener('click', initiatePayment);
+            document.getElementById('retryBtn').addEventListener('click', goToStep1);
+            
+            // Variables to store state
+            let selectedMethod = null;
+            let paymentReference = reference;
+            
+            // Functions
+            function generateReference() {
+                return 'PAY-' + Date.now().toString();
+            }
+            
+            async function loadMerchantDetails(merchantId) {
+                try {
+                    // In a real implementation, you would fetch merchant details from your API
+                    // For this demo, we'll use placeholder data
+                    document.getElementById('merchantName').textContent = 'Demo Merchant';
+                } catch (error) {
+                    console.error('Error loading merchant details:', error);
+                }
+            }
+            
+            async function loadPaymentMethods(merchantId) {
+                try {
+                    // In a real implementation, you would fetch payment methods from your API
+                    // For this demo, we'll use hardcoded methods
+                    const paymentMethodsContainer = document.getElementById('paymentMethods');
+                    paymentMethodsContainer.innerHTML = '';
+                    
+                    const methods = [
+                        { id: 'MPESA_PAYBILL', name: 'M-Pesa Paybill', icon: 'mpesa-icon.png' },
+                        { id: 'MPESA_TILL', name: 'M-Pesa Till', icon: 'mpesa-icon.png' }
+                    ];
+                    
+                    methods.forEach(method => {
+                        const methodCard = document.createElement('div');
+                        methodCard.className = 'payment-method-card d-flex align-items-center';
+                        methodCard.dataset.methodId = method.id;
+                        
+                        methodCard.innerHTML = `
+                            <img src="/${method.icon}" alt="${method.name}">
+                            <span>${method.name}</span>
+                        `;
+                        
+                        methodCard.addEventListener('click', function() {
+                            // Deselect all methods
+                            document.querySelectorAll('.payment-method-card').forEach(card => {
+                                card.classList.remove('selected');
+                            });
+                            
+                            // Select this method
+                            this.classList.add('selected');
+                            selectedMethod = method.id;
+                            
+                            // Enable proceed button
+                            document.getElementById('proceedBtn').disabled = false;
+                        });
+                        
+                        paymentMethodsContainer.appendChild(methodCard);
+                    });
+                } catch (error) {
+                    console.error('Error loading payment methods:', error);
+                }
+            }
+            
+            function goToStep1() {
+                document.getElementById('step1').style.display = 'block';
+                document.getElementById('step2').style.display = 'none';
+                document.getElementById('step3').style.display = 'none';
+            }
+            
+            function goToStep2() {
+                if (!selectedMethod) {
+                    alert('Please select a payment method');
+                    return;
+                }
+                
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+                document.getElementById('step3').style.display = 'none';
+                
+                // Show appropriate form based on selected method
+                if (selectedMethod === 'MPESA_PAYBILL' || selectedMethod === 'MPESA_TILL') {
+                    document.getElementById('mpesaForm').style.display = 'block';
+                    document.getElementById('otherForms').style.display = 'none';
+                } else {
+                    document.getElementById('mpesaForm').style.display = 'none';
+                    document.getElementById('otherForms').style.display = 'block';
+                }
+            }
+            
+            function goToStep3(status) {
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'none';
+                document.getElementById('step3').style.display = 'block';
+                
+                // Show appropriate payment status
+                document.getElementById('loadingPayment').style.display = status === 'loading' ? 'block' : 'none';
+                document.getElementById('paymentSuccess').style.display = status === 'success' ? 'block' : 'none';
+                document.getElementById('paymentFailed').style.display = status === 'failed' ? 'block' : 'none';
+            }
+            
+            async function initiatePayment() {
+                const phone = document.getElementById('phone').value;
+                
+                if (!phone) {
+                    alert('Please enter your phone number');
+                    return;
+                }
+                
+                // Show loading status
+                goToStep3('loading');
+                
+                try {
+                    // Call the payment API
+                    const response = await fetch(`${apiBaseUrl}/payments/process.php`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${merchantId}` // In a real implementation, this would be the merchant's API key
+                        },
+                        body: JSON.stringify({
+                            payment_method: selectedMethod,
+                            amount: parseFloat(amount),
+                            description: description,
+                            phone_number: phone,
+                            reference: paymentReference
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Start polling for payment status
+                        paymentReference = result.data.reference;
+                        pollPaymentStatus(paymentReference);
+                    } else {
+                        // Show failure
+                        document.getElementById('failureReason').textContent = result.error || 'Payment initiation failed';
+                        goToStep3('failed');
+                    }
+                } catch (error) {
+                    console.error('Error initiating payment:', error);
+                    document.getElementById('failureReason').textContent = 'Network error. Please try again.';
+                    goToStep3('failed');
+                }
+            }
+            
+            function pollPaymentStatus(reference) {
+                // Poll for payment status every 5 seconds
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const response = await fetch(`${apiBaseUrl}/payments/status?reference=${reference}`, {
+                            headers: {
+                                'Authorization': `Bearer ${merchantId}` // In a real implementation, this would be the merchant's API key
+                            }
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            if (result.data.status === 'COMPLETED') {
+                                // Payment successful
+                                clearInterval(pollInterval);
+                                
+                                // Update success details
+                                document.getElementById('successReference').textContent = reference;
+                                document.getElementById('successAmount').textContent = `KES ${parseFloat(amount).toFixed(2)}`;
+                                document.getElementById('successDate').textContent = new Date().toLocaleString();
+                                
+                                goToStep3('success');
+                            } else if (result.data.status === 'FAILED') {
+                                // Payment failed
+                                clearInterval(pollInterval);
+                                document.getElementById('failureReason').textContent = 'Payment was declined or cancelled';
+                                goToStep3('failed');
+                            }
+                            // For PENDING status, continue polling
+                        } else {
+                            // Error checking status
+                            clearInterval(pollInterval);
+                            document.getElementById('failureReason').textContent = result.error || 'Error checking payment status';
+                            goToStep3('failed');
+                        }
+                    } catch (error) {
+                        console.error('Error checking payment status:', error);
+                        clearInterval(pollInterval);
+                        document.getElementById('failureReason').textContent = 'Network error while checking payment status';
+                        goToStep3('failed');
+                    }
+                }, 5000);
+                
+                // Stop polling after 2 minutes (120000 ms) if no definitive status
+                setTimeout(() => {
+                    clearInterval(pollInterval);
+                    document.getElementById('failureReason').textContent = 'Payment timed out. Please check your phone or try again.';
+                    goToStep3('failed');
+                }, 120000);
+            }
+        });
+    </script>
+</body>
+</html>
