@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .logo {
+            max-width: 150px;
+            height: auto;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .footer {
+            border-top: 1px solid #eee;
+            padding: 20px 0;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+        .payment-info {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .payment-details {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .payment-details td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .payment-details td:first-child {
+            font-weight: bold;
+            width: 40%;
+        }
+        .retry-button {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{LOGO_URL}" alt="{APP_NAME}" class="logo">
+        <h1>Payment Failed</h1>
+    </div>
+    
+    <div class="content">
+        <p>Dear {CUSTOMER_NAME},</p>
+        
+        <p>We regret to inform you that your recent payment attempt was unsuccessful.</p>
+        
+        <div class="payment-info">
+            <table class="payment-details">
+                <tr>
+                    <td>Reference:</td>
+                    <td>{REFERENCE}</td>
+                </tr>
+                <tr>
+                    <td>Amount:</td>
+                    <td>{AMOUNT} {CURRENCY}</td>
+                </tr>
+                <tr>
+                    <td>Date:</td>
+                    <td>{DATE}</td>
+                </tr>
+                <tr>
+                    <td>Description:</td>
+                    <td>{DESCRIPTION}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <p>Possible reasons for the failed payment:</p>
+        <ul>
+            <li>Insufficient funds in your account</li>
+            <li>Incorrect payment details</li>
+            <li>Payment declined by your bank</li>
+            <li>Connection issues during the payment process</li>
+        </ul>
+        
+        <p>You can try again by clicking the button below:</p>
+        
+        <a href="{RETRY_URL}" class="retry-button">Retry Payment</a>
+        
+        <p>If you continue to experience issues or have any questions, please contact our support team for assistance.</p>
+        
+        <p>Best regards,<br>
+        The {APP_NAME} Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>© {CURRENT_YEAR} {APP_NAME}. All rights reserved.</p>
+        <p>For support, please contact us at {SUPPORT_EMAIL} or call {SUPPORT_PHONE}</p>
+    </div>
+</body>
+</html>

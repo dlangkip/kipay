@@ -1,0 +1,527 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Kipay Payment Gateway API",
+      "description": "API for processing payments through Pesapal",
+      "version": "1.0.0",
+      "contact": {
+        "email": "support@benfex.net"
+      }
+    },
+    "servers": [
+      {
+        "url": "https://kipay.benfex.net",
+        "description": "Production API"
+      }
+    ],
+    "components": {
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      },
+      "schemas": {
+        "Payment": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "type": "number",
+              "format": "float",
+              "example": 1000.00
+            },
+            "description": {
+              "type": "string",
+              "example": "Payment for Product XYZ"
+            },
+            "first_name": {
+              "type": "string",
+              "example": "John"
+            },
+            "last_name": {
+              "type": "string",
+              "example": "Doe"
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "example": "john.doe@example.com"
+            },
+            "phone": {
+              "type": "string",
+              "example": "+254700000000"
+            },
+            "currency": {
+              "type": "string",
+              "example": "KES"
+            },
+            "payment_method": {
+              "type": "string",
+              "example": "MPESA"
+            },
+            "payment_metadata": {
+              "type": "object",
+              "example": {
+                "order_id": "12345",
+                "customer_id": "67890"
+              }
+            }
+          },
+          "required": ["amount", "description", "first_name", "last_name", "email"]
+        },
+        "PaymentResponse": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "message": {
+              "type": "string",
+              "example": "Payment created successfully"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "reference": {
+                  "type": "string",
+                  "example": "PAY-12345-6789012345"
+                },
+                "payment_url": {
+                  "type": "string",
+                  "example": "https://pesapal.com/payment/abc123"
+                },
+                "status": {
+                  "type": "string",
+                  "example": "PENDING"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "example": "2023-01-01 12:00:00"
+                },
+                "currency": {
+                  "type": "string",
+                  "example": "KES"
+                },
+                "amount": {
+                  "type": "number",
+                  "format": "float",
+                  "example": 1000.00
+                },
+                "description": {
+                  "type": "string",
+                  "example": "Payment for Product XYZ"
+                },
+                "payment_method": {
+                  "type": "string",
+                  "example": "MPESA"
+                },
+                "payment_method_name": {
+                  "type": "string",
+                  "example": "M-Pesa"
+                }
+              }
+            }
+          }
+        },
+        "StatusResponse": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "message": {
+              "type": "string",
+              "example": "Transaction status retrieved"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "reference": {
+                  "type": "string",
+                  "example": "PAY-12345-6789012345"
+                },
+                "status": {
+                  "type": "string",
+                  "example": "COMPLETED"
+                },
+                "amount": {
+                  "type": "number",
+                  "format": "float",
+                  "example": 1000.00
+                },
+                "currency": {
+                  "type": "string",
+                  "example": "KES"
+                },
+                "payment_method": {
+                  "type": "string",
+                  "example": "MPESA"
+                },
+                "tracking_id": {
+                  "type": "string",
+                  "example": "PESAPAL-TRX-12345"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "example": "2023-01-01 12:00:00"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "example": "2023-01-01 12:10:00"
+                },
+                "checked_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "example": "2023-01-01 12:15:00"
+                }
+              }
+            }
+          }
+        },
+        "MethodsResponse": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "message": {
+              "type": "string",
+              "example": "Payment methods retrieved successfully"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "channels": {
+                  "type": "object",
+                  "properties": {
+                    "mobile_money": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "example": {
+                        "MPESA": "M-Pesa",
+                        "AIRTEL": "Airtel Money",
+                        "EQUITEL": "Equitel",
+                        "TKASH": "T-Kash"
+                      }
+                    },
+                    "banks": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "example": {
+                        "EQUITY": "Equity Bank",
+                        "KCB": "KCB Bank",
+                        "COOP": "Cooperative Bank"
+                      }
+                    },
+                    "cards": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "example": {
+                        "VISA": "Visa",
+                        "MASTERCARD": "Mastercard",
+                        "AMEX": "American Express"
+                      }
+                    }
+                  }
+                },
+                "preferred_channels": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "example": ["MPESA", "VISA", "MASTERCARD"]
+                }
+              }
+            }
+          }
+        },
+        "Error": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "string",
+              "example": "Unauthorized"
+            },
+            "message": {
+              "type": "string",
+              "example": "Invalid API key"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "BearerAuth": []
+      }
+    ],
+    "paths": {
+      "/api/payments": {
+        "post": {
+          "summary": "Create a new payment",
+          "description": "Creates a new payment and returns a payment URL",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Payment created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaymentResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/payments/methods": {
+        "get": {
+          "summary": "Get available payment methods",
+          "description": "Returns a list of all available payment methods",
+          "responses": {
+            "200": {
+              "description": "Payment methods retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MethodsResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/payments/status": {
+        "get": {
+          "summary": "Check payment status",
+          "description": "Returns the status of a payment",
+          "parameters": [
+            {
+              "name": "reference",
+              "in": "query",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Payment reference"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Payment status retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/StatusResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/webhook/ipn": {
+        "post": {
+          "summary": "Instant Payment Notification endpoint",
+          "description": "Endpoint for receiving payment status updates from Pesapal",
+          "security": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/x-www-form-urlencoded": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pesapal_notification_type": {
+                      "type": "string",
+                      "example": "CHANGE"
+                    },
+                    "pesapal_transaction_tracking_id": {
+                      "type": "string",
+                      "example": "PESAPAL-TRX-12345"
+                    },
+                    "pesapal_merchant_reference": {
+                      "type": "string",
+                      "example": "PAY-12345-6789012345"
+                    }
+                  },
+                  "required": [
+                    "pesapal_notification_type",
+                    "pesapal_transaction_tracking_id",
+                    "pesapal_merchant_reference"
+                  ]
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "IPN processed successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "IPN processed successfully"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "reference": {
+                            "type": "string",
+                            "example": "PAY-12345-6789012345"
+                          },
+                          "tracking_id": {
+                            "type": "string",
+                            "example": "PESAPAL-TRX-12345"
+                          },
+                          "status": {
+                            "type": "string",
+                            "example": "COMPLETED"
+                          },
+                          "processed_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2023-01-01 12:15:00"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }

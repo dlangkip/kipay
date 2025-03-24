@@ -83,8 +83,11 @@ $logger->logRequest($endpoint, $requestMethod, $requestData);
 $auth = new \MyPaymentGateway\Middleware\Authentication(CONFIG['api_keys']);
 
 try {
+    // Skip authentication for documentation endpoints
+    $skipAuth = ($endpoint === '/docs' || $endpoint === '/docs/swagger.json');
+    
     // Authenticate the request
-    if (!$auth->authenticate(getAuthorizationHeader())) {
+    if (!$skipAuth && !$auth->authenticate(getAuthorizationHeader())) {
         sendResponse(['error' => 'Unauthorized'], 401);
     }
     
@@ -94,6 +97,16 @@ try {
             if ($requestMethod === 'POST') {
                 $controller = new \MyPaymentGateway\Endpoints\PaymentController(CONFIG);
                 $response = $controller->createPayment($requestData);
+                sendResponse($response);
+            } else {
+                sendResponse(['error' => 'Method not allowed'], 405);
+            }
+            break;
+            
+        case '/payments/methods':
+            if ($requestMethod === 'GET') {
+                $controller = new \MyPaymentGateway\Endpoints\PaymentController(CONFIG);
+                $response = $controller->getPaymentMethods();
                 sendResponse($response);
             } else {
                 sendResponse(['error' => 'Method not allowed'], 405);
@@ -119,6 +132,20 @@ try {
                 sendResponse(['error' => 'Method not allowed'], 405);
             }
             break;
+            
+        case '/docs':
+            // API Documentation endpoint
+            $docsHtml = file_get_contents(__DIR__ . '/docs/index.html');
+            header('Content-Type: text/html');
+            echo $docsHtml;
+            exit;
+            
+        case '/docs/swagger.json':
+            // Swagger JSON endpoint
+            $swaggerJson = file_get_contents(__DIR__ . '/docs/swagger.json');
+            header('Content-Type: application/json');
+            echo $swaggerJson;
+            exit;
             
         default:
             sendResponse(['error' => 'Endpoint not found'], 404);

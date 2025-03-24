@@ -1,8 +1,8 @@
 <?php
 /**
- * Kipay Gateway Module for benfex
+ * Kipay Gateway Module for Benfex
  * 
- * This file should be placed in the system/payments/ directory of your benfex installation
+ * This file should be placed in the system/payments/ directory of your Benfex installation
  */
 
 // Define payment gateway information
@@ -20,14 +20,42 @@ $gateway_description = 'Kipay payment gateway using Pesapal API';
  * @return string HTML payment button
  */
 function my_payment_gateway_create_payment_button($invoice, $config) {
-    // Generate payment form with hidden fields
+    // Generate payment form with hidden fields and payment options
     $form = '
     <form method="post" action="' . U . 'client/ipay/' . $invoice['id'] . '/my_payment_gateway">
         <input type="hidden" name="invoice_id" value="' . $invoice['id'] . '">
         <input type="hidden" name="amount" value="' . $invoice['total'] . '">
         <input type="hidden" name="currency" value="' . $config['currency_code'] . '">
         <input type="hidden" name="description" value="Payment for Invoice #' . $invoice['id'] . '">
-        <button type="submit" class="btn btn-primary">Pay with ' . $gateway_name . '</button>
+        
+        <div class="form-group mb-3">
+            <label>Choose Payment Method (Optional)</label>
+            <select name="payment_method" class="form-control">
+                <option value="">Any Payment Method</option>
+                <optgroup label="Mobile Money">
+                    <option value="MPESA">M-Pesa</option>
+                    <option value="AIRTEL">Airtel Money</option>
+                    <option value="EQUITEL">Equitel</option>
+                    <option value="TKASH">T-Kash</option>
+                </optgroup>
+                <optgroup label="Banks">
+                    <option value="EQUITY">Equity Bank</option>
+                    <option value="KCB">KCB Bank</option>
+                    <option value="COOP">Cooperative Bank</option>
+                    <option value="ABSA">ABSA Bank</option>
+                    <option value="SCB">Standard Chartered</option>
+                    <option value="NCBA">NCBA Bank</option>
+                    <option value="FAMILY">Family Bank</option>
+                </optgroup>
+                <optgroup label="Cards">
+                    <option value="VISA">Visa Card</option>
+                    <option value="MASTERCARD">Mastercard</option>
+                    <option value="AMEX">American Express</option>
+                </optgroup>
+            </select>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Pay with Kipay Gateway</button>
     </form>';
     
     return $form;
@@ -66,6 +94,47 @@ function my_payment_gateway_process_payment($request, $config) {
         ]
     ];
     
+    // Add payment method if specified
+    if (!empty($request['payment_method'])) {
+        $data['payment_method'] = $request['payment_method'];
+        
+        // If it's MPESA, add paybill number
+        if ($request['payment_method'] === 'MPESA') {
+            $data['paybill_number'] = $config['mpesa_paybill'] ?? '174379'; // Default to Pesapal paybill
+        }
+        
+        // Set payment channel based on the selected method
+        // This will help Pesapal direct the user to the appropriate payment option
+        switch ($request['payment_method']) {
+            case 'MPESA':
+            case 'AIRTEL':
+            case 'EQUITEL':
+            case 'TKASH':
+                $data['payment_channel'] = 'MOBILE';
+                break;
+                
+            case 'VISA':
+            case 'MASTERCARD':
+            case 'AMEX':
+                $data['payment_channel'] = 'CARD';
+                break;
+                
+            case 'EQUITY':
+            case 'KCB':
+            case 'COOP':
+            case 'ABSA':
+            case 'SCB':
+            case 'NCBA':
+            case 'FAMILY':
+                $data['payment_channel'] = 'BANK';
+                break;
+                
+            default:
+                // Let Pesapal choose the appropriate channel
+                break;
+        }
+    }
+    
     // Make API request to your custom payment gateway
     $payment = my_payment_gateway_api_request('/payments', 'POST', $data, $config);
     
@@ -86,7 +155,7 @@ function my_payment_gateway_process_payment($request, $config) {
     $trans->datetime = date('Y-m-d H:i:s');
     $trans->amount = $invoice->total;
     $trans->currency = $config['currency_code'];
-    $trans->pmethod = 'My Payment Gateway';
+    $trans->pmethod = 'Kipay Gateway';
     $trans->description = 'Payment for Invoice #' . $invoice_id;
     $trans->ref = $payment['data']['reference'];
     $trans->status = 'Pending';
@@ -115,7 +184,7 @@ function my_payment_gateway_ipn_callback($request, $config) {
     global $app;
     
     // Log IPN callback
-    $app->log('My Payment Gateway IPN: ' . json_encode($request));
+    $app->log('Kipay Gateway IPN: ' . json_encode($request));
     
     // Validate required parameters
     if (!isset($request['pesapal_merchant_reference']) || 
@@ -217,7 +286,7 @@ function my_payment_gateway_admin_config($config) {
     <div class="form-group">
         <label for="api_url">API URL</label>
         <input type="text" class="form-control" id="api_url" name="api_url" value="' . ($config['api_url'] ?? '') . '" required>
-        <small class="form-text text-muted">The URL of your payment gateway API (e.g., https://yourdomain.com/api)</small>
+        <small class="form-text text-muted">The URL of your payment gateway API (e.g., https://kipay.benfex.net/api)</small>
     </div>
     <div class="form-group">
         <label for="api_key">API Key</label>
@@ -322,7 +391,7 @@ function my_payment_gateway_callback($request, $config) {
     global $app;
     
     // Log callback
-    $app->log('My Payment Gateway Callback: ' . json_encode($request));
+    $app->log('Kipay Gateway Callback: ' . json_encode($request));
     
     // Extract reference from callback parameters
     $reference = $request['pesapal_merchant_reference'] ?? null;
