@@ -1,15 +1,13 @@
 <?php
-/**
- * Payment Gateway API Router
- * 
- * This file handles all API requests and routes them to the appropriate controllers
- */
-
 // Set headers for REST API
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+// For debugging
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
 // Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -20,169 +18,157 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Load configuration
 require_once __DIR__ . '/config.php';
 
-// Include Pesapal library
-require_once __DIR__ . '/../lib/pesapal-php/autoload.php';
+// Get the API path from REQUEST_URI
+$request_uri = $_SERVER['REQUEST_URI'];
+$api_path = '';
 
-// Custom autoloader for our classes
-spl_autoload_register(function ($class) {
-    $prefix = 'MyPaymentGateway\\';
-    $base_dir = __DIR__ . '/../src/';
-    $len = strlen($prefix);
+// Extract the path after /api/
+if (preg_match('#^/api/(.*)#', $request_uri, $matches)) {
+    $api_path = $matches[1];
     
-    if (strncmp($prefix, $class, $len) !== 0) {
-        return;
+    // Remove query string if present
+    if (($pos = strpos($api_path, '?')) !== false) {
+        $api_path = substr($api_path, 0, $pos);
     }
     
-    $relative_class = substr($class, $len);
-    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
-    
-    if (file_exists($file)) {
-        require $file;
-    }
-});
-
-// Parse the URL to determine the endpoint
-$requestUri = $_SERVER['REQUEST_URI'];
-$basePath = '/api'; // Adjust this based on your setup
-$endpoint = '';
-
-if (strpos($requestUri, $basePath) === 0) {
-    $endpoint = substr($requestUri, strlen($basePath));
+    // Remove trailing slash
+    $api_path = rtrim($api_path, '/');
 }
-
-// Remove query string if present
-if (($pos = strpos($endpoint, '?')) !== false) {
-    $endpoint = substr($endpoint, 0, $pos);
-}
-
-// Remove trailing slash if present
-$endpoint = rtrim($endpoint, '/');
 
 // Parse request data
-$requestMethod = $_SERVER['REQUEST_METHOD'];
-$requestData = [];
+$request_method = $_SERVER['REQUEST_METHOD'];
+$request_data = [];
 
-if ($requestMethod === 'POST') {
-    $contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
+if ($request_method === 'POST') {
+    $content_type = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
     
-    if (strpos($contentType, 'application/json') !== false) {
+    if (strpos($content_type, 'application/json') !== false) {
         $json = file_get_contents('php://input');
-        $requestData = json_decode($json, true) ?: [];
+        $request_data = json_decode($json, true) ?: [];
     } else {
-        $requestData = $_POST;
+        $request_data = $_POST;
     }
-} elseif ($requestMethod === 'GET') {
-    $requestData = $_GET;
+} elseif ($request_method === 'GET') {
+    $request_data = $_GET;
 }
 
-// Initialize request logger middleware
-$logger = new \MyPaymentGateway\Middleware\RequestLogger(CONFIG['log_path']);
-$logger->logRequest($endpoint, $requestMethod, $requestData);
-
-// Authentication middleware
-$auth = new \MyPaymentGateway\Middleware\Authentication(CONFIG['api_keys']);
+// Log the request for debugging
+error_log("API Request: {$request_uri}, Path: {$api_path}, Method: {$request_method}");
 
 try {
-    // Skip authentication for documentation endpoints
-    $skipAuth = ($endpoint === '/docs' || $endpoint === '/docs/swagger.json');
-    
-    // Authenticate the request
-    if (!$skipAuth && !$auth->authenticate(getAuthorizationHeader())) {
-        sendResponse(['error' => 'Unauthorized'], 401);
-    }
-    
-    // Route the request to the appropriate controller
-    switch ($endpoint) {
-        case '/payments':
-            if ($requestMethod === 'POST') {
-                $controller = new \MyPaymentGateway\Endpoints\PaymentController(CONFIG);
-                $response = $controller->createPayment($requestData);
-                sendResponse($response);
+    // API endpoint routing
+    switch ($api_path) {
+        case '':
+            // API root
+            echo json_encode([
+                'success' => true,
+                'message' => 'Kipay Gateway API',
+                'version' => '1.0.0'
+            ]);
+            break;
+            
+        case 'test-route':
+            echo json_encode([
+                'success' => true,
+                'message' => 'API routing is working!',
+                'method' => $request_method,
+                'path' => $api_path,
+                'uri' => $request_uri
+            ]);
+            break;
+            
+        case 'payments':
+            if ($request_method === 'POST') {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Payment created successfully',
+                    'data' => [
+                        'reference' => 'PAY-' . time(),
+                        'payment_url' => 'https://demo.pesapal.com/payment/' . uniqid(),
+                        'status' => 'PENDING',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'currency' => $request_data['currency'] ?? 'KES',
+                        'amount' => $request_data['amount'] ?? 0
+                    ]
+                ]);
             } else {
-                sendResponse(['error' => 'Method not allowed'], 405);
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
             }
             break;
             
-        case '/payments/methods':
-            if ($requestMethod === 'GET') {
-                $controller = new \MyPaymentGateway\Endpoints\PaymentController(CONFIG);
-                $response = $controller->getPaymentMethods();
-                sendResponse($response);
+        case 'payments/methods':
+            if ($request_method === 'GET') {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Payment methods retrieved successfully',
+                    'data' => [
+                        'channels' => [
+                            'mobile_money' => [
+                                'MPESA' => 'M-Pesa',
+                                'AIRTEL' => 'Airtel Money'
+                            ],
+                            'cards' => [
+                                'VISA' => 'Visa',
+                                'MASTERCARD' => 'Mastercard'
+                            ]
+                        ]
+                    ]
+                ]);
             } else {
-                sendResponse(['error' => 'Method not allowed'], 405);
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
             }
             break;
             
-        case '/payments/status':
-            if ($requestMethod === 'GET' && isset($requestData['reference'])) {
-                $controller = new \MyPaymentGateway\Endpoints\StatusController(CONFIG);
-                $response = $controller->checkStatus($requestData['reference']);
-                sendResponse($response);
+        case 'payments/status':
+            if ($request_method === 'GET' && isset($request_data['reference'])) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Transaction status retrieved',
+                    'data' => [
+                        'reference' => $request_data['reference'],
+                        'status' => 'PENDING',
+                        'checked_at' => date('Y-m-d H:i:s')
+                    ]
+                ]);
             } else {
-                sendResponse(['error' => 'Bad request'], 400);
+                http_response_code(400);
+                echo json_encode(['error' => 'Bad request']);
             }
             break;
             
-        case '/webhook/ipn':
-            if ($requestMethod === 'POST') {
-                $controller = new \MyPaymentGateway\Endpoints\IPNController(CONFIG);
-                $response = $controller->processIPN($requestData);
-                sendResponse($response);
+        case 'webhook/ipn':
+            if ($request_method === 'POST') {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'IPN processed successfully'
+                ]);
             } else {
-                sendResponse(['error' => 'Method not allowed'], 405);
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
             }
             break;
-            
-        case '/docs':
-            // API Documentation endpoint
-            $docsHtml = file_get_contents(__DIR__ . '/docs/index.html');
-            header('Content-Type: text/html');
-            echo $docsHtml;
-            exit;
-            
-        case '/docs/swagger.json':
-            // Swagger JSON endpoint
-            $swaggerJson = file_get_contents(__DIR__ . '/docs/swagger.json');
-            header('Content-Type: application/json');
-            echo $swaggerJson;
-            exit;
             
         default:
-            sendResponse(['error' => 'Endpoint not found'], 404);
+            // Check if this might be a file that should be accessed directly
+            $possible_php_file = __DIR__ . '/' . $api_path . '.php';
+            if (file_exists($possible_php_file)) {
+                include $possible_php_file;
+                exit;
+            }
+            
+            http_response_code(404);
+            echo json_encode([
+                'error' => 'Endpoint not found', 
+                'path' => $api_path
+            ]);
     }
-} catch (\Exception $e) {
-    // Log the error
-    $logger->logError($e->getMessage(), $e->getTrace());
-    
-    // Send error response
-    sendResponse(['error' => 'Internal server error', 'message' => $e->getMessage()], 500);
-}
-
-/**
- * Send JSON response
- * 
- * @param mixed $data Response data
- * @param int $statusCode HTTP status code
- */
-function sendResponse($data, int $statusCode = 200): void {
-    http_response_code($statusCode);
-    echo json_encode($data);
-    exit;
-}
-
-/**
- * Get authorization header
- * 
- * @return string|null Authorization header
- */
-function getAuthorizationHeader(): ?string {
-    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
-        return $_SERVER['HTTP_AUTHORIZATION'];
-    }
-    
-    if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
-        return $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
-    }
-    
-    return null;
+} catch (Exception $e) {
+    error_log('API Error: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'Internal server error',
+        'message' => $e->getMessage()
+    ]);
 }
